@@ -21,10 +21,7 @@
       border-radius: 20px;
       animation: pop 0.5s ease;
     }
-    @keyframes pop {
-      0% { transform: scale(.6); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
+    @keyframes pop { 0% { transform: scale(.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
     .question-box {
       background: rgba(255,255,255,0.6);
@@ -52,10 +49,7 @@
       font-size: 1.1rem;
       transition: .15s;
     }
-    .choice:hover {
-      transform: scale(1.05);
-      background: white;
-    }
+    .choice:hover { transform: scale(1.05); background: white; }
 
     .btn {
       background: black;
@@ -68,10 +62,23 @@
       transition: .2s;
     }
     .btn:hover { background: #333; }
+
+    #menuInput {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 120px;
+    }
   </style>
 </head>
 <body>
   <h1>🍎 Apple Trivia Battle</h1>
+
+  <input type="text" id="menuInput" placeholder="Type 'Secret'">
 
   <audio id="correctSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
   <audio id="wrongSound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
@@ -82,28 +89,36 @@
     <div class="question-box" id="questionBox">Press Start to begin!</div>
     <div id="choices"></div>
     <button onclick="startNormal()" class="btn">Start</button>
-    <button onclick="openSecret()" class="btn">Secret Mode</button>
   </div>
 
   <script>
-    const questions = [
-      { q:"What year was Apple founded?", c:["1976","1980","1999","2007"], a:0 },
-      { q:"Who co-founded Apple with Steve Jobs?", c:["Bill Gates","Steve Wozniak","Tim Cook","Zuckerberg"], a:1 },
-      { q:"First iPhone without a home button?", c:["6","11","X","8"], a:2 },
-      { q:"Apple's 2020 chip series?", c:["A-Series","UltraCore","M-Series","Fusion"], a:2 }
-    ];
+    const normalQuestions = [];
+    const secretQuestions = [];
 
-    const secretQuestions = [
-      { q:"Apple logo fruit?", c:["Banana","Pineapple","Apple","Orange"], a:2 },
-      { q:"Who makes iPhones?", c:["Samsung","LG","Apple","Tesla"], a:2 }
-    ];
+    // Generate 20 sample normal questions
+    for(let i=1;i<=20;i++) {
+      normalQuestions.push({
+        q: `Normal Question ${i}?`,
+        c: [`Option A`, `Option B`, `Option C`, `Option D`],
+        a: Math.floor(Math.random()*4)
+      });
+    }
+
+    // Generate 20 sample secret questions (ultra easy)
+    for(let i=1;i<=20;i++) {
+      secretQuestions.push({
+        q: `Secret Easy Question ${i}?`,
+        c: [`Apple`, `Banana`, `Orange`, `Pineapple`],
+        a: 0
+      });
+    }
 
     let index = 0;
-    let currentSet = questions;
+    let currentSet = normalQuestions;
 
     function startNormal() {
       index = 0;
-      currentSet = questions;
+      currentSet = normalQuestions;
       nextQuestion();
     }
 
@@ -112,7 +127,7 @@
       const choicesDiv = document.getElementById("choices");
 
       if (index >= currentSet.length) {
-        box.textContent = "🎉 All done! Try Secret Mode!";
+        box.textContent = "🎉 All done! Type 'Secret' in the menu to try Secret Mode!";
         choicesDiv.innerHTML = "";
         return;
       }
@@ -131,57 +146,51 @@
     }
 
     function handleAnswer(correct) {
-      if (correct) {
-        playCorrect();
-        startConfetti();
-      } else {
-        playWrong();
-      }
+      if(correct) { playCorrect(); startConfetti(); }
+      else { playWrong(); }
       index++;
       setTimeout(nextQuestion, 400);
     }
 
-    function openSecret() {
+    function playCorrect() { document.getElementById("correctSound").play(); }
+    function playWrong() { document.getElementById("wrongSound").play(); }
+
+    function startSecret() {
       index = 0;
       currentSet = secretQuestions;
       nextQuestion();
     }
 
-    function playCorrect() {
-      document.getElementById("correctSound").play();
-    }
-    function playWrong() {
-      document.getElementById("wrongSound").play();
-    }
+    // Detect Secret Mode input
+    document.getElementById('menuInput').addEventListener('keypress', function(e) {
+      if(e.key === 'Enter' && this.value.trim().toLowerCase() === 'secret') {
+        startSecret();
+        this.value = '';
+      }
+    });
 
-    // Confetti
+    // Confetti code
     const canvas = document.getElementById("confettiCanvas");
     const ctx = canvas.getContext("2d");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
     function random(min,max){ return Math.random()*(max-min)+min; }
-
     let confettiParticles = [];
-
     function startConfetti(){
-      for (let i=0;i<150;i++){
+      for(let i=0;i<150;i++){
         confettiParticles.push({x:random(0,canvas.width),y:random(-50,-10),r:random(2,6),s:random(1,4),c:`hsl(${random(0,360)},100%,50%)`});
       }
       animateConfetti();
     }
-
     function animateConfetti(){
       ctx.clearRect(0,0,canvas.width,canvas.height);
-      confettiParticles.forEach((p,i)=>{
+      confettiParticles.forEach(p=>{
         p.y += p.s;
-        ctx.beginPath();
-        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        ctx.fillStyle=p.c;
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle=p.c; ctx.fill();
       });
       confettiParticles = confettiParticles.filter(p=>p.y < canvas.height);
-      if (confettiParticles.length>0) requestAnimationFrame(animateConfetti);
+      if(confettiParticles.length>0) requestAnimationFrame(animateConfetti);
     }
   </script>
 </body>
